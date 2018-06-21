@@ -305,8 +305,6 @@ update_local_purge_doc(Db, State, PSeq) ->
         {<<"type">>, <<"mrview">>},
         {<<"purge_seq">>, PSeq},
         {<<"updated_on">>, NowSecs},
-        {<<"verify_module">>, <<"couch_mrview_index">>},
-        {<<"verify_function">>, <<"verify_index_exists">>},
         {<<"dbname">>, get(db_name, State)},
         {<<"ddoc_id">>, get(idx_name, State)},
         {<<"signature">>, Sig}

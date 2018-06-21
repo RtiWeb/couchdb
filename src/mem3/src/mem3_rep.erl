@@ -122,9 +122,7 @@ make_local_id(SourceThing, TargetThing, Filter) ->
 
 
 make_purge_id(SourceUUID, TargetUUID) ->
-    Version = "v" ++ config:get("purge", "version", "1") ++ "-",
-    ?l2b(?LOCAL_DOC_PREFIX ++ "purge-mem3-" ++ Version ++
-        ?b2l(SourceUUID) ++ "-" ++ ?b2l(TargetUUID)).
+    <<"_local/purge-mem3-", SourceUUID/binary, "-", TargetUUID/binary>>.
 
 
 verify_purge_checkpoint(Props) ->
@@ -500,8 +498,6 @@ purge_cp_body(#acc{} = Acc, PurgeSeq) ->
         {<<"type">>, <<"internal_replication">>},
         {<<"updated_on">>, NowSecs},
         {<<"purge_seq">>, PurgeSeq},
-        {<<"verify_module">>, <<"mem3_rep">>},
-        {<<"verify_function">>, <<"verify_purge_checkpoint">>},
         {<<"dbname">>, Source#shard.dbname},
         {<<"source">>, atom_to_binary(Source#shard.node, latin1)},
         {<<"target">>, atom_to_binary(Target#shard.node, latin1)},

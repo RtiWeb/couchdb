@@ -81,7 +81,7 @@
 
     get_minimum_purge_seq/1,
     purge_client_exists/3,
-    get_purge_client_fun/2,
+    get_purge_client_fun/1,
 
     update_doc/3,
     update_doc/4,
@@ -475,7 +475,8 @@ purge_client_exists(DbName, DocId, Props) ->
     LagThreshold = NowSecs - LagWindow,
 
     try
-        CheckFun = get_purge_client_fun(DocId, Props),
+        Type = couch_util:get_value(<<"type">>, Props),
+        CheckFun = get_purge_client_fun(Type),
         Exists = CheckFun(Props),
         if not Exists -> ok; true ->
             Updated = couch_util:get_value(<<"updated_on">>, Props),
@@ -496,33 +497,13 @@ purge_client_exists(DbName, DocId, Props) ->
     end.
 
 
-get_purge_client_fun(DocId, Props) ->
-    M0 = couch_util:get_value(<<"verify_module">>, Props),
-    M = try
-        binary_to_existing_atom(M0, latin1)
-    catch error:badarg ->
-        Fmt1 = "Missing index module '~p' for purge checkpoint '~s'",
-        couch_log:error(Fmt1, [M0, DocId]),
-        throw(failed)
-    end,
+get_purge_client_fun(Type) ->
+    couch_db_plugin:get_purge_client_fun(
+        Type, fun get_purge_client_fun_int/1).
 
-    F0 = couch_util:get_value(<<"verify_function">>, Props),
-    try
-        F = binary_to_existing_atom(F0, latin1),
-        case erlang:function_exported(M, F, 1) of
-            true ->
-                fun M:F/1;
-            false ->
-                Fmt2 = "Missing exported function '~p' in '~p'
-                    for purge checkpoint '~s'",
-                couch_log:error(Fmt2, [F0, M0, DocId]),
-                throw(failed)
-        end
-    catch error:badarg ->
-        Fmt3 = "Missing function '~p' in '~p' for purge checkpoint '~s'",
-        couch_log:error(Fmt3, [F0, M0, DocId]),
-        throw(failed)
-    end.
+
+get_purge_client_fun_int(_Type) ->
+    undefined.
 
 
 set_purge_infos_limit(#db{main_pid=Pid}=Db, Limit) when Limit > 0 ->

@@ -10,22 +10,17 @@
 % License for the specific language governing permissions and limitations under
 % the License.
 
--module(couch_index_plugin_couch_db).
+-module(mem3_plugin_couch_db).
 
 -export([
-    get_purge_client_fun/1,
-    on_compact/2
+    get_purge_client_fun/1
 ]).
 
 
 get_purge_client_fun(Type) ->
     case Type of
-        <<"mrview">> ->
-            {decided, fun couch_mrview_index:verify_index_exists/1};
+        <<"internal_replication">> ->
+            {decided, fun mem3_rep:verify_purge_checkpoint/1};
         _ ->
             no_decision
     end.
-
-
-on_compact(DbName, DDocs) ->
-    couch_mrview_index:ensure_local_purge_docs(DbName, DDocs).
